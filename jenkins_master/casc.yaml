@@ -1,0 +1,99 @@
+jenkins:
+  systemMessage: "Jenkins configured automatically by Jenkins Configuration as Code plugin\n\n"
+  numExecutors: 0
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+       - id: ${JENKINS_ADMIN_ID}
+         password: ${JENKINS_ADMIN_PASSWORD}
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Read:anonymous"
+        - "Job/Read:anonymous"
+        - "View/Read:anonymous"
+        - "Overall/Administer:authenticated"
+  remotingSecurity:
+    enabled: true
+
+
+  nodes:
+    - permanent:
+        labelString: "linux docker test"
+        mode: NORMAL
+        name: "jenkins_agent"
+        numExecutors: 1
+        remoteFS: "/home/jenkins/agent"
+        launcher:
+          ssh:
+            host: "agent"
+            port: 22
+            credentialsId: "ssh_private_key"
+            javaPath: "/opt/java/openjdk/bin/java"
+            launchTimeoutSeconds: 60
+            maxNumRetries: 10
+            retryWaitTime: 10
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+
+
+  clouds:
+    - docker:
+        name: "docker"
+        dockerApi:
+          dockerHost:
+            uri: "unix:///var/run/docker.sock"
+
+
+security:
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false
+  queueItemAuthenticator:
+    authenticators:
+    - global:
+        strategy: triggeringUsersAuthorizationStrategy
+
+
+unclassified:
+  githubpluginconfig:
+    configs:
+      - name: "Personal Github"
+        apiUrl: "https://api.github.com"
+        credentialsId: github-token
+        manageHooks: false
+  slackNotifier:
+    teamDomain: ${SLACK_TEAM_DOMAIN}
+    tokenCredentialId: slack-token
+  location:
+    url: http://127.0.0.1:8080/
+
+
+jobs:
+  - providedEnv:
+      DISCORD_WEBHOOK: "${DISCORD_WEBHOOK}"
+      GITHUB_REPO: "${GITHUB_REPO}"
+  - file: var/jenkins_home/pipelines.groovy
+
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              scope: GLOBAL
+              id: slack-token
+              secret: "${SLACK_TOKEN}"
+              description: Slack token
+          - string:
+              scope: GLOBAL
+              id: github-token
+              secret: "${GITHUB_TOKEN}"
+              description: Github token
+          - basicSSHUserPrivateKey:
+              scope: "GLOBAL"
+              id: "ssh_private_key"
+              username: "jenkins"
+              description: "Private key for interacting with docker agent nodes."
+              privateKeySource:
+                directEntry:
+                  privateKey: "${PRIVATE_KEY}"

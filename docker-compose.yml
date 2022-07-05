@@ -1,0 +1,93 @@
+version: '3'
+
+services:
+
+  jenkins:
+    
+    build: ./jenkins_master
+
+    container_name: jenkins-server
+    
+    privileged: true
+    
+    hostname: jenkinsserver
+    
+    user: root
+    
+    ports: 
+      - "8080:8080"
+      - "50000:50000"
+    
+    secrets:
+      - JENKINS_ADMIN_ID
+      - JENKINS_ADMIN_PASSWORD
+      - PRIVATE_KEY
+      - SLACK_TOKEN
+      - GITHUB_TOKEN
+      - DISCORD_WEBHOOK
+
+
+  agent:
+
+    build: ./jenkins_agent
+
+    privileged: true
+
+    user: root
+
+    container_name: agent
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+  ngrok:
+
+    image: wernight/ngrok:latest
+
+    container_name: ngrok
+
+    ports:
+      - 4040:4040
+      
+    environment:
+      NGROK_AUTH: ${NGROK_AUTH}
+      NGROK_LOOK_DOMAIN: ${NGROK_LOOK_DOMAIN}
+      NGROK_PROTOCOL: ${NGROK_PROTOCOL}
+      NGROK_PORT: ${NGROK_PORT}
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl localhost:4040/api/tunnels"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  webhookconfig:
+
+    build: ./webhookconfig
+
+    depends_on:
+      ngrok:
+        condition: service_healthy
+    
+
+secrets:
+  JENKINS_ADMIN_ID:
+    file: ./secrets/login/JENKINS_ADMIN_ID
+  JENKINS_ADMIN_PASSWORD:
+    file: ./secrets/login/JENKINS_ADMIN_PASSWORD
+  PRIVATE_KEY:
+    file: ./secrets/keys/PRIVATE_KEY
+  PUBLIC_KEY:
+    file: ./secrets/keys/PUBLIC_KEY
+  SLACK_TOKEN:
+    file: ./secrets/tokens/SLACK_TOKEN
+  GITHUB_TOKEN:
+    file: ./secrets/tokens/GITHUB_TOKEN
+  DISCORD_WEBHOOK:
+    file: ./secrets/webhooks/DISCORD_WEBHOOK
+  GITHUB_REPO:
+    file: ./secrets/github/GITHUB_REPO
+  SLACK_TEAM_DOMAIN:
+    file: ./secrets/slack/TEAM_DOMAIN

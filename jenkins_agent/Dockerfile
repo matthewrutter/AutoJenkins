@@ -1,0 +1,9 @@
+FROM jenkins/ssh-agent:alpine
+ENV JENKINS_AGENT_SSH_PUBKEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCeIqRJFCGLIfGsuW4FTVL9uu8Fr2i9UzdthlnATQbOMhvkYya+Xug05Xz8IEbYxMEALGLF6/FOAhsrswykztUfRn8jHFFeA4wDpbjUwa9Br8wUwEG/3tY24DGOt1J3Mdii1lTNPHMRMWjWzRlvbUgQOc/L/5pjy/rVjdJ9WxEwrTeNllCe/GweXhpha9eXRnUbjwsWC5SMEecprUL4te4RBPGee1RzJYsXkIhuymJVI95qtDMAQsgmo4jpAcxksH8XYzJuIRqUGgXE2ShDZC93cQ61QepKJC+hqsYDyE4IEV8cCyFDhnBbrqgcSaomtjuM0kybvcyNI6xxabxd+TJvs8kuoAFnoY3wayVdl0vQEwdPe8ftNFZdtyMFgu7pKcNLYTtTW+LJkezeHKN85QUnRgA2Q1QQptBpynA6lvAI0tkXkeIuyT7VbQRjBANCOqtcrRNExwtfLeTb8hYLcclkax0o8ZZ0kT1uDQiJr3EQHc01qSiEopHFd7Bky7QuQY8= root@jenkinsserver"
+RUN apk update
+RUN rm /usr/glibc-compat/lib/ld-linux-x86-64.so.2 && \
+    ln -s ld-2.33.so /usr/glibc-compat/lib/ld-linux-x86-64.so.2
+RUN apk add docker
+RUN apk add git
+RUN apk add jq
+
